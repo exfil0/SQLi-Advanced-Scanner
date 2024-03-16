@@ -21,7 +21,7 @@ The Advanced SQL Injection Scanner is a sophisticated, Python-based tool crafted
     pip install requests beautifulsoup4
     ```
 
-3. **Save the Script**: Copy the SQLi scanner script into a file named `sqli_scanner.py` on your machine.
+3. **Save the Script**: Copy the SQLi scanner script into a file named `SQLiAS.py` on your machine.
 
 ## Usage
 
@@ -30,7 +30,7 @@ Run the tool from the command line, adjusting the command based on your testing 
 ### Basic Command Structure
 
 ```bash
-python sqli_scanner.py <URL> [OPTIONS]
+python SQLiAS.py <URL> [OPTIONS]
 ```
 
 ### Options
@@ -44,31 +44,31 @@ python sqli_scanner.py <URL> [OPTIONS]
 1. **Basic Scan**:
     To perform a basic scan with default settings:
     ```bash
-    python sqli_scanner.py http://example.com
+    python SQLiAS.py http://example.com
     ```
 
 2. **Using Custom Payloads**:
     If you have a file `my_payloads.txt` with custom payloads, use:
     ```bash
-    python sqli_scanner.py http://example.com --payloads my_payloads.txt
+    python SQLiAS.py http://example.com --payloads my_payloads.txt
     ```
 
 3. **Setting a Custom Timeout**:
     To set a custom timeout of 5 seconds, use:
     ```bash
-    python sqli_scanner.py http://example.com --timeout 5
+    python SQLiAS.py http://example.com --timeout 5
     ```
 
 4. **Adjusting Verbosity**:
     For detailed output, set the verbosity level to 1:
     ```bash
-    python sqli_scanner.py http://example.com --verbosity 1
+    python SQLiAS.py http://example.com --verbosity 1
     ```
 
 5. **Combining Options**:
     Combine all options for a customized scan:
     ```bash
-    python sqli_scanner.py http://example.com --payloads my_payloads.txt --timeout 10 --verbosity 2
+    python SQLiAS.py http://example.com --payloads my_payloads.txt --timeout 10 --verbosity 2
     ```
 
 ## Ethical Considerations
