@@ -1,6 +1,7 @@
+```markdown
 # Multi-Vulnerability and Token Security Scanner Tool
 
-The Multi-Vulnerability and Token Security Scanner is a comprehensive, Python-based utility designed for security analysts, penetration testers, and developers to identify and assess a wide spectrum of vulnerabilities in web applications and authentication tokens. This tool automates the detection of injection vulnerabilities, including SQL Injection (SQLi), NoSQL Injection, GraphQL Injection, Cross-Site Scripting (XSS), Command Injection (CI), LDAP Injection, and XML External Entity (XXE) Injection. It utilizes diverse detection techniques, such as error-based analysis, boolean-based blind testing, and time-based blind testing, to reveal vulnerabilities even in applications that do not display explicit error messages. In addition, the tool features specialized modules for scrutinizing authentication tokens, including JSON Web Tokens (JWT), OAuth 2.0 access tokens, SAML assertions, and OpenID Connect ID tokens. These modules evaluate for common security flaws, such as algorithm weaknesses, signature misconfigurations, key confusion, expiration and issuance time issues, replay vulnerabilities, and more.
+The Multi-Vulnerability and Token Security Scanner is a comprehensive Python-based utility designed for security analysts, penetration testers, and developers to identify and assess a wide spectrum of vulnerabilities in web applications and authentication tokens. This tool automates the detection of injection vulnerabilities, including SQL Injection (SQLi), NoSQL Injection, GraphQL Injection, Cross-Site Scripting (XSS), Command Injection (CI), LDAP Injection, and XML External Entity (XXE) Injection. It utilizes diverse detection techniques, such as error-based analysis, boolean-based blind testing, and time-based blind testing, to reveal vulnerabilities even in applications that do not display explicit error messages. In addition, the tool features specialized modules for scrutinizing authentication tokens, including JSON Web Tokens (JWT), OAuth 2.0 access tokens, SAML assertions, and OpenID Connect ID tokens. These modules evaluate for common security flaws, such as algorithm weaknesses, signature misconfigurations, key confusion, expiration and issuance time issues, replay vulnerabilities, and more.
 
 The scanner functions by dispatching carefully constructed payloads to target URLs via GET parameters or POST forms and examining the responses for vulnerability indicators. For token analysis, it decodes, validates, and alters tokens to detect potential exploitation vectors. All testing is intended for ethical and authorized use, with a strong emphasis on obtaining explicit permission prior to any assessment to comply with legal and professional standards.
 
@@ -23,6 +24,36 @@ The scanner functions by dispatching carefully constructed payloads to target UR
 - **Progress Monitoring and User Feedback**: Employs tqdm for visual progress bars during multi-payload tests, aiding in tracking long scans. Verbosity settings allow tailored output, from high-level vulnerability alerts to verbose debugging with request/response details.
 
 - **Ethical Design Principles**: Built exclusively for authorized security assessments, with documentation emphasizing legal compliance, permission requirements, and responsible disclosure. The tool avoids any exploitative or destructive actions, focusing solely on detection.
+
+## Toolkit Architecture Diagram
+
+Below is a Mermaid diagram illustrating the high-level architecture of the scanner tool, showing how the web vulnerability scanning components interact with the token testing modules. The diagram depicts the main flows: input processing, vulnerability testing branches, token analysis paths, and output reporting.
+
+```mermaid
+graph TD
+    A[User Input: URL or Token Parameters] --> B[Command Line Parser]
+    B --> C{Mode Selection}
+    C -->|Web Scan| D[HTTP Request Engine]
+    D --> E[GET Parameter Testing]
+    D --> F[POST Form Detection & Testing]
+    E --> G[Payload Injection: SQLi, NoSQL, GraphQL, XSS, CI, LDAP, XML]
+    F --> G
+    G --> H[Response Analysis: Error Indicators, Blind Boolean/Time Diffs]
+    H --> I[Vulnerability Reporting]
+    C -->|Token Test| J[Token Decoder & Parser]
+    J --> K[JWT Module: None Algo, Weak Secrets, KID, Key Confusion]
+    J --> L[OAuth Module: Introspection, PKCE Enforcement]
+    J --> M[SAML Module: Signature Validation, Wrapping, Replay]
+    J --> N[OpenID Module: Claim Validation, JWT Integration]
+    K --> O[Modified Token Testing on URL]
+    L --> O
+    M --> O
+    N --> O
+    O --> I
+    I --> P[Detailed Vulnerability Report with Descriptions & Recommendations]
+```
+
+This diagram represents the tool's modular structure, where web scanning and token testing are separate but share reporting mechanisms. The HTTP engine handles web interactions, while token modules focus on parsing and manipulation.
 
 ## Installation and Setup
 
@@ -96,7 +127,7 @@ Example 1: JWT Testing with Key Confusion
 python vuln_scanner.py --jwt eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signature --jwks-url https://auth.example.com/jwks.json --test-jwt-url https://api.example.com/protected --verbosity 2
 ```
 
-This decodes the token, tests none algorithm by generating and submitting a none token to the test URL, checks for weak HS secrets if applicable, notes KID risks, and if RS256, performs key confusion by using the public key as an HS secret for verification and testing a modified HS256 token on the URL.
+This decodes the token, tests none algorithm (generates and submits a none token to the test URL), checks for weak HS secrets if applicable, notes KID risks, and if RS256, performs key confusion by using the public key as an HS secret for verification and testing a modified HS256 token on the URL.
 
 Example 2: OAuth 2.0 Testing with PKCE Check
 
@@ -109,7 +140,7 @@ This introspects the token for activity and tests the authorization endpoint for
 Example 3: SAML Testing with Replay and Wrapping
 
 ```
-python vuln_scanner.py --saml base64_saml_assertion --test-saml-url https://app.example.com/saml-login --saml-header SAML-Assertion
+python vuln_scanner.py --saml base64_saml_xml --test-saml-url http://example.com/saml-endpoint --saml-header SAML-Assertion
 ```
 
 This parses the SAML, validates structure/signature/expiration, tests an unsigned version, applies signature wrapping with a malicious duplicate assertion, and checks for replay by double-submitting.
@@ -117,13 +148,24 @@ This parses the SAML, validates structure/signature/expiration, tests an unsigne
 Example 4: OpenID Connect ID Token Validation
 
 ```
-python vuln_scanner.py --openid-id-token id_token --issuer https://openid.provider.com --client-id client --nonce nonce_value --state state_value --test-jwt-url https://app.example.com/openid-endpoint
+python vuln_scanner.py --openid-id-token id_token --issuer https://openid.provider.com --client-id client --nonce nonce_value --state state_value --test-jwt-url http://example.com/openid-protected
 ```
 
 This checks OpenID claims and runs JWT tests, reporting mismatches or expiration issues.
 
 ## Ethical Considerations and Legal Disclaimer
 
-This tool is developed and distributed for ethical security research, authorized penetration testing, and educational purposes only. Users are solely responsible for ensuring all activities comply with applicable laws, regulations, and ethical standards. Obtain explicit, documented permission from system owners before scanning any URL or testing tokens. Unauthorized use may infringe on privacy rights, breach contracts, or violate laws like the CFAA (USA), Computer Misuse Act (UK), or equivalent international statutes, leading to legal repercussions.
+This tool is developed and distributed for ethical security research, authorized penetration testing, and educational purposes only. Users are solely responsible for ensuring all activities comply with applicable laws, regulations, and ethical standards. Obtain explicit, documented permission from system owners before scanning any URL or testing tokens. Unauthorized use may infringe on privacy rights, breach contracts, or violate laws like the Computer Fraud and Abuse Act (CFAA) in the United States, the Computer Misuse Act in the United Kingdom, or similar international statutes, potentially resulting in legal consequences.
 
-The tool's creators disclaim all liability for misuse, including any damages, data loss, or legal consequences. Promote responsible disclosure: If vulnerabilities are found, notify affected parties promptly and allow reasonable time for remediation before public release. Reference resources like the OWASP Cheat Sheet Series or NIST guidelines for best practices in vulnerability testing and token security. By using this tool, you agree to these terms.
+The tool's creators disclaim all liability for misuse, including any damages, data loss, or legal issues arising from its application. Promote responsible disclosure: If vulnerabilities are found, notify affected parties promptly and allow reasonable time for remediation before public release. Reference resources like the OWASP Cheat Sheet Series or NIST guidelines for best practices in vulnerability testing and token security. By using this tool, you agree to these terms.
+
+## License
+
+This project is licensed under the MIT License.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
